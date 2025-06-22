@@ -1,0 +1,75 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIDocMe</title>
+    <style>
+        * {
+            font-size: 102%;
+        }
+    </style>
+    <link rel="stylesheet" href="./highlight/styles/default.min.css">
+    <script type="module">
+        import { AIDocMe } from "./aidocme.js"
+        let content = await fetch("./test.json").then(async response => {
+            return await response.text();
+        });
+        let adm = new AIDocMe();
+        adm.serialized = JSON.parse(content);
+        adm.renderDoc(document.getElementById("doc"));
+        adm.renderCode(document.getElementById("code"));
+        adm.renderSeg(document.getElementById("seg"))
+        document.getElementById("visdoc").onclick = (e) => {
+            const div = document.getElementById("doc")
+            if (div.style.display == "none") {
+                div.style.display = ""
+                e.target.style.opacity = 1
+            } else {
+                div.style.display = "none"
+                e.target.style.opacity = 0.5
+            }
+        }
+        document.getElementById("viscode").onclick = (e) => {
+            const div = document.getElementById("code")
+            if (div.style.display == "none") {
+                div.style.display = ""
+                e.target.style.opacity = 1
+            } else {
+                div.style.display = "none"
+                e.target.style.opacity = 0.5
+            }
+        }
+        document.getElementById("visseg").onclick = (e) => {
+            const div = document.getElementById("seg")
+            if (div.style.display == "none") {
+                div.style.display = ""
+                e.target.style.opacity = 1
+            } else {
+                div.style.display = "none"
+                e.target.style.opacity = 0.5
+            }
+        }
+        document.getElementById("copycode").onclick = async (e) => {
+            await navigator.clipboard.writeText(
+                adm.joinSeg()
+            )
+        }
+    </script>
+</head>
+
+<body>
+    <div id="toolbar" style="display: inline;height: 5vh;margin-bottom: 5px;">
+        <button id="visdoc">Doc</button>
+        <button id="viscode">Code</button>
+        <button id="visseg">Seg</button>
+        <button id="copycode">Copy Code</button>
+    </div>
+    <div style="display: flex;height:94vh;overflow: hidden;">
+        <div id="doc" style="flex:1;box-sizing: border-box; overflow-y: auto;"></div>
+        <div id="code" style="flex:1;box-sizing: border-box;overflow-y: auto;"></div>
+        <div id="seg" style="flex:1;box-sizing: border-box;overflow-y: auto;"></div>
+    </div>
+</body>
+
+</html>
