@@ -1,4 +1,4 @@
-#  [`aidocme.py`](range://?s=0&e=8340&di=0&ds=0&de=0)
+#  [`aidocme.py`](range://?s=0&e=8345&di=0&ds=0&de=0)
 
 ```plaintext
 no module docs
@@ -194,7 +194,7 @@ def serialize(
 ) -> dict[str, Any]:
 ```
 
-## 11. [`process`](range://?s=7471&e=7938&di=34&ds=7592&de=7592)
+## 11. [`process`](range://?s=7471&e=7943&di=34&ds=7597&de=7597)
 
 ```plaintext
 no method docs
@@ -203,10 +203,10 @@ no method docs
 ```python
 def process(
     filepath: str = __file__, source: str = None
-) -> tuple[list[Content], list[tuple[int, int, str]]]:
+) -> tuple[list[Content], list[tuple[int, int, str]], str]:
 ```
 
-## 12. [`main`](range://?s=7941&e=8300&di=36&ds=7957&de=7957)
+## 12. [`main`](range://?s=7946&e=8305&di=36&ds=7962&de=7962)
 
 ```plaintext
 no method docs
