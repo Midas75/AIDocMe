@@ -9,17 +9,24 @@
             font-size: 102%;
         }
     </style>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.1/dist/sweetalert2.all.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.1/dist/sweetalert2.min.css" rel="stylesheet"> -->
     <link rel="stylesheet" href="./highlight/styles/default.min.css">
     <script type="module">
+        import Swal from "./sweetalert2.esm.all.js"
         import { AIDocMe } from "./aidocme.js"
-        let content = await fetch("./test.json").then(async response => {
-            return await response.text();
-        });
         let adm = new AIDocMe();
-        adm.serialized = JSON.parse(content);
-        adm.renderDoc(document.getElementById("doc"));
-        adm.renderCode(document.getElementById("code"));
-        adm.renderSeg(document.getElementById("seg"))
+        function updateADM(content) {
+            adm.serialized = JSON.parse(content);
+            adm.renderDoc(document.getElementById("doc"));
+            adm.renderCode(document.getElementById("code"));
+            adm.renderSeg(document.getElementById("seg"))
+        }
+        let content = await fetch("./aidocme.json").then(async response => {
+            updateADM(await response.text());
+        });
+        
+        
         document.getElementById("visdoc").onclick = (e) => {
             const div = document.getElementById("doc")
             if (div.style.display == "none") {
@@ -51,10 +58,134 @@
             }
         }
         document.getElementById("copycode").onclick = async (e) => {
-            await navigator.clipboard.writeText(
-                adm.joinSeg()
-            )
+            try {
+                await navigator.clipboard.writeText(
+                    adm.joinSeg()
+                )
+                Swal.fire(
+                    {
+                        title: "Copied to clipboard",
+                        icon: "success"
+                    }
+                )
+            } catch (e) {
+                Swal.fire({
+                    title: "Error",
+                    icon: "error",
+                    text: e
+                })
+            }
         }
+        document.getElementById("config").onclick = async (e) => {
+            const form = document.createElement("form");
+            form.id = "configForm";
+            form.autocomplete = "on";
+
+            const select = document.createElement("select");
+            select.name = "lang";
+            select.id = "lang";
+            select.className = "swal2-select";
+            select.style.width = "400px"
+
+            const optionZh = document.createElement("option");
+            optionZh.value = "中文";
+            optionZh.textContent = "中文";
+            if (adm.lang === "中文") optionZh.selected = true;
+            select.appendChild(optionZh);
+
+            const optionEn = document.createElement("option");
+            optionEn.value = "英文";
+            optionEn.textContent = "英文";
+            if (adm.lang === "英文") optionEn.selected = true;
+            select.appendChild(optionEn);
+
+            const openAIUrlInput = document.createElement("input");
+            openAIUrlInput.name = "openAIUrl";
+            openAIUrlInput.id = "openAIUrl";
+            openAIUrlInput.className = "swal2-input";
+            openAIUrlInput.placeholder = "URL";
+            openAIUrlInput.type = "url";
+            openAIUrlInput.style.width = "400px"
+            openAIUrlInput.autocomplete = "url"
+
+            const modelInput = document.createElement("input");
+            modelInput.name = "model";
+            modelInput.id = "model";
+            modelInput.className = "swal2-input";
+            modelInput.placeholder = "Model";
+            modelInput.type = "text";
+            modelInput.autocomplete = "username"
+            modelInput.style.width = "400px"
+
+            const apiKeyInput = document.createElement("input");
+            apiKeyInput.name = "apiKey";
+            apiKeyInput.id = "apiKey";
+            apiKeyInput.className = "swal2-input";
+            apiKeyInput.placeholder = "API Key";
+            apiKeyInput.type = "password";
+            apiKeyInput.autocomplete = "current-password"
+            apiKeyInput.style.width = "400px"
+
+            form.appendChild(select);
+            form.appendChild(document.createElement("br"));
+            form.appendChild(openAIUrlInput);
+            form.appendChild(document.createElement("br"));
+            form.appendChild(modelInput);
+            form.appendChild(document.createElement("br"));
+            form.appendChild(apiKeyInput);
+
+            form.method = "dialog"
+            openAIUrlInput.value = adm.openAIUrl;
+            modelInput.value = adm.model;
+            apiKeyInput.value = adm.apiKey;
+
+            const result = await Swal.fire({
+                title: "Config",
+                html: form,
+                focusConfirm: false,
+                preConfirm: () => {
+
+                    const v = {
+                        lang: document.getElementById("lang").value,
+                        openAIUrl: document.getElementById("openAIUrl").value,
+                        model: document.getElementById("model").value,
+                        apiKey: document.getElementById("apiKey").value
+                    }
+                    return v
+                }
+            })
+            if (result.isConfirmed) {
+                document.getElementById("configForm").submit()
+                let v = result.value
+                adm.lang = v.lang
+                adm.openAIUrl = v.openAIUrl
+                adm.apiKey = v.apiKey
+                adm.model = v.model
+            }
+        }
+        document.getElementById("download").onclick = (e) => {
+            adm.downloadCode();
+        }
+        document.getElementById("upload").onclick = async (e) => {
+            const { value: file } = await Swal.fire({
+                title: "Select *.py",
+                input: "file",
+                inputAttributes: {
+                    "accept": "py",
+                }
+            });
+            if (file) {
+                const formData = new FormData();
+                formData.append("file",file);
+                const response = await fetch("/docme",{
+                    method:"POST",
+                    body:formData
+                });
+                const result = await response.text()
+                updateADM(result)
+            }
+        }
+        document.getElementById("config").click()
     </script>
 </head>
 
@@ -62,8 +193,11 @@
     <div id="toolbar" style="display: inline;height: 5vh;margin-bottom: 5px;">
         <button id="visdoc">Doc</button>
         <button id="viscode">Code</button>
-        <button id="visseg">Seg</button>
+        <button id="visseg">Segement</button>
         <button id="copycode">Copy Code</button>
+        <button id="download">Download Code</button>
+        <button id="upload">Upload Code</button>
+        <button id="config">Config</button>
     </div>
     <div style="display: flex;height:94vh;overflow: hidden;">
         <div id="doc" style="flex:1;box-sizing: border-box; overflow-y: auto;"></div>

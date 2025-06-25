@@ -1,3 +1,5 @@
+from os.path import basename
+from pathlib import Path
 import sys
 from enum import Enum
 from typing import Any
@@ -113,10 +115,10 @@ def get_docstring_range(
     ):
         doc_node = node.body[0]
     if doc_node is None:
-        ds, _ = tokens.get_text_range(node.body[0],False)
+        ds, _ = tokens.get_text_range(node.body[0], False)
         de = ds
     else:
-        ds, de = tokens.get_text_range(doc_node,False)
+        ds, de = tokens.get_text_range(doc_node, False)
     return ds, de
 
 
@@ -136,11 +138,27 @@ def normalize_indent(code_str):
     return result
 
 
-def visit(node, tokens: ASTTokens, level: int, contents: list[Content]):
+def visit(
+    node,
+    tokens: ASTTokens,
+    level: int,
+    sig_level: list[str],
+    contents: list[Content],
+    file_name: str,
+):
+    sig = None
     s, e = tokens.get_text_range(node)
     if isinstance(node, (Module, ClassDef, FunctionDef, AsyncFunctionDef)):
         d = get_docstring(node)
         ds, de = get_docstring_range(node, tokens)
+        if isinstance(node, FunctionDef | AsyncFunctionDef | ClassDef):
+            bs, _ = tokens.get_text_range(node.body[0])
+            sig = tokens.get_text(node)[: bs - s]
+            sig = sig[: sig.rfind(":") + 1]
+            # sig = normalize_indent(sig).lstrip()
+    sig_level_copy = sig_level.copy()
+    if sig is not None:
+        sig_level_copy.append(sig)
     if isinstance(node, Module):
         contents.append(
             Content(
@@ -151,15 +169,12 @@ def visit(node, tokens: ASTTokens, level: int, contents: list[Content]):
                 end=e,
                 doc_start=ds,
                 doc_end=de,
-                signature="Module",
-                title="Module",
+                signature="\n".join(sig_level_copy),
+                title=file_name,
             )
         )
     elif isinstance(node, FunctionDef | AsyncFunctionDef):
-        bs, _ = tokens.get_text_range(node.body[0])
-        sig = tokens.get_text(node)[: bs - s]
-        sig = sig[: sig.rfind(":") + 1]
-        sig = normalize_indent(sig).lstrip()
+
         contents.append(
             Content(
                 level,
@@ -169,15 +184,11 @@ def visit(node, tokens: ASTTokens, level: int, contents: list[Content]):
                 end=e,
                 doc_start=ds,
                 doc_end=de,
-                signature=sig,
+                signature="\n".join(sig_level_copy),
                 title=node.name,
             )
         )
     elif isinstance(node, ClassDef):
-        bs, _ = tokens.get_text_range(node.body[0])
-        sig = tokens.get_text(node)[: bs - s]
-        sig = sig[: sig.rfind(":") + 1]
-        sig = normalize_indent(sig).lstrip()
         contents.append(
             Content(
                 level,
@@ -187,12 +198,13 @@ def visit(node, tokens: ASTTokens, level: int, contents: list[Content]):
                 end=e,
                 doc_start=ds,
                 doc_end=de,
-                signature=sig,
+                signature="\n".join(sig_level_copy),
                 title=node.name,
             )
         )
+
     for child in iter_child_nodes(node):
-        visit(child, tokens, level + 1, contents)
+        visit(child, tokens, level + 1, sig_level_copy, contents, file_name)
 
 
 def jsonify(serialized: dict[str, Any]) -> str:
@@ -223,9 +235,12 @@ def markdownify(serialized: dict[str, Any]) -> str:
 
 
 def serialize(
-    contents: list[Content], seg: list[tuple[int, int, str]]
+    contents: list[Content],
+    seg: list[tuple[int, int, str]],
+    file_name: str = "example.py",
 ) -> dict[str, Any]:
     result = dict[str, Any]()
+    result["file_name"] = file_name
     result["content"] = list[dict]()
     result["seg"] = list[dict]()
     seq = Sequence()
@@ -254,26 +269,29 @@ def serialize(
 
 
 def process(
-    filepath: str = __file__,
-) -> tuple[list[Content], list[tuple[int, int, str]]]:
+    filepath: str = __file__, source: str = None
+) -> tuple[list[Content], list[tuple[int, int, str]], str]:
     contents = list[Content]()
-    with open(filepath, encoding="utf-8") as f:
-        source = f.read()
+    if source is None:
+        with open(filepath, encoding="utf-8") as f:
+            source = f.read()
+    file_name = basename(filepath)
     tree = parse(source)
     tokens = ASTTokens(source, tree=tree)
-    visit(tree, tokens, 0, contents)
-    return contents, seg_source(source, contents)
+    visit(tree, tokens, 0, [], contents, file_name)
+    return contents, seg_source(source, contents), file_name
 
 
 def main():
     if len(sys.argv) > 1:
-        l, s = process(sys.argv[1])
+        l, s, fn = process(sys.argv[1])
     else:
-        l, s = process()
-    ser = serialize(l, s)
-    with open("test.md", "w", encoding="utf-8") as f:
+        l, s, fn = process()
+    ser = serialize(l, s, fn)
+    fnn = Path(fn).with_suffix("")
+    with open(f"{fnn}.md", "w", encoding="utf-8") as f:
         f.write(markdownify(ser))
-    with open("test.json", "w", encoding="utf-8") as f:
+    with open(f"{fnn}.json", "w", encoding="utf-8") as f:
         f.write(jsonify(ser))
 
 
