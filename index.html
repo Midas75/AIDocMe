@@ -6,6 +6,7 @@
     <title>AIDocMe</title>
     <style>
         * {
+            font-family: Consolas, 'Courier New', monospace;
             font-size: 102%;
         }
     </style>
@@ -187,11 +188,11 @@
                 const formData = new FormData();
                 formData.append("file", file);
                 const loadingSwal = Swal.fire({
-                    title:"AST Parsing",
-                    allowOutsideClick:false,
-                    didOpen: ()=>Swal.showLoading()
+                    title: "AST Parsing",
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
                 })
-                const response =await fetch("/docme", {
+                const response = await fetch("/docme", {
                     method: "POST",
                     body: formData
                 });
