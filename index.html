@@ -9,13 +9,23 @@
             font-size: 102%;
         }
     </style>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.1/dist/sweetalert2.all.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.22.1/dist/sweetalert2.min.css" rel="stylesheet"> -->
     <link rel="stylesheet" href="./highlight/styles/default.min.css">
+    <script id="mmi" src="./mathpix-markdown-it.js"></script>
     <script type="module">
         import Swal from "./sweetalert2.esm.all.js"
         import { AIDocMe } from "./aidocme.js"
         let adm = new AIDocMe();
+        window.render = (str, _) => str;
+        function loadMathJaxScript() {
+            document.body.appendChild(document.createElement("div"));
+            let script = document.createElement("script");
+            script.src = "./mathpix-markdown-it.js";
+            script.onload = (e) => {
+                window.loadMathJax();
+            }
+            document.head.append(script);
+        }
+        loadMathJaxScript();
         function updateADM(content) {
             adm.serialized = JSON.parse(content);
             adm.renderDoc(document.getElementById("doc"));
@@ -25,8 +35,8 @@
         let content = await fetch("./aidocme.json").then(async response => {
             updateADM(await response.text());
         });
-        
-        
+
+
         document.getElementById("visdoc").onclick = (e) => {
             const div = document.getElementById("doc")
             if (div.style.display == "none") {
@@ -94,9 +104,9 @@
             select.appendChild(optionZh);
 
             const optionEn = document.createElement("option");
-            optionEn.value = "英文";
-            optionEn.textContent = "英文";
-            if (adm.lang === "英文") optionEn.selected = true;
+            optionEn.value = "English";
+            optionEn.textContent = "English";
+            if (adm.lang === "English") optionEn.selected = true;
             select.appendChild(optionEn);
 
             const openAIUrlInput = document.createElement("input");
@@ -144,7 +154,6 @@
                 html: form,
                 focusConfirm: false,
                 preConfirm: () => {
-
                     const v = {
                         lang: document.getElementById("lang").value,
                         openAIUrl: document.getElementById("openAIUrl").value,
@@ -176,12 +185,18 @@
             });
             if (file) {
                 const formData = new FormData();
-                formData.append("file",file);
-                const response = await fetch("/docme",{
-                    method:"POST",
-                    body:formData
+                formData.append("file", file);
+                const loadingSwal = Swal.fire({
+                    title:"AST Parsing",
+                    allowOutsideClick:false,
+                    didOpen: ()=>Swal.showLoading()
+                })
+                const response =await fetch("/docme", {
+                    method: "POST",
+                    body: formData
                 });
                 const result = await response.text()
+                loadingSwal.close();
                 updateADM(result)
             }
         }

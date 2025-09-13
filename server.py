@@ -1,6 +1,6 @@
 from os.path import dirname, abspath
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse,FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from aidocme import process, serialize
@@ -17,11 +17,12 @@ app.add_middleware(
 current_dir = dirname(abspath(__file__))
 app.mount("/static", StaticFiles(directory=current_dir))
 
-
 @app.get("/")
 async def redirect_to_index():
     return RedirectResponse(url="/static/index.html")
-
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse("./favicon.ico")
 
 @app.post("/docme")
 async def docme(file: UploadFile = File(...)):

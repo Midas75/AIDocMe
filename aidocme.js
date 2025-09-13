@@ -33,7 +33,7 @@ export class AIDocMe {
     openAIUrl = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
     apiKey = "76a878dc-4905-44c3-858c-8ef33006250f"
     model = "ep-20250522175540-clbcq"
-    lang = "英文"
+    lang = "English"
     _codeEl = null
     _docEl = null
     _segEl = null
@@ -124,7 +124,7 @@ export class AIDocMe {
             `那么你应当结合其内容，重新写一份。`,
             `在撰写时，你一定要注意保留python docstring所要求的引号格式`,
             `（"""或'''）。\n`,
-            `**注意：你只可以写docstring，不可以附加上下文的代码**。`,
+            `**注意：你只可以写docstring，不可以附加上下文的代码**。\n`,
             `因为你输出的内容将会直接被替换至python代码中作为docstring。`,
             `代码如下：\n`].join("")
         return {
@@ -157,7 +157,7 @@ export class AIDocMe {
             `那么你应当结合其内容，重新写一份。`,
             `在撰写时，你一定要注意保留python docstring所要求的引号格式`,
             `（"""或'''）。\n`,
-            `**注意：你只可以写docstring，不可以附加上下文的代码**。`,
+            `**注意：你只可以写docstring，不可以附加上下文的代码**。\n`,
             `因为你输出的内容将会直接被替换至python代码中作为docstring。`,
             `代码如下：\n`].join("")
         return {
@@ -189,7 +189,7 @@ export class AIDocMe {
             `那么你应当结合其内容，重新写一份。`,
             `在撰写时，你一定要注意保留python docstring所要求的引号格式`,
             `（"""或'''）。\n`,
-            `**注意：你只可以写docstring，不可以附加上下文的代码**。`,
+            `**注意：你只可以写docstring，不可以附加上下文的代码**。\n`,
             `因为你输出的内容将会直接被替换至python代码中作为docstring。`,
             `代码如下：\n`].join("")
         return {
@@ -377,9 +377,13 @@ export class AIDocMe {
             ed.prompt.onclick = (e) => {
                 let div = document.createElement("div")
                 div.style.textAlign = "left"
-                div.classList.add("language-plaintext", "hljs")
-                div.style.whiteSpace = "pre-wrap"
-                div.textContent = tts.moduleDocstringRequestBody().messages[0].content[0].text
+                // div.classList.add("language-plaintext", "hljs")
+                div.style.padding = "5px";
+                let pureText = tts.moduleDocstringRequestBody().messages[0].content[0].text
+                div.innerHTML = window.render(pureText, {
+                    htmlTags: true,
+                    typographer: false
+                })
                 Swal.fire({
                     title: "Prompt",
                     html: div
@@ -394,9 +398,14 @@ export class AIDocMe {
             ed.prompt.onclick = (e) => {
                 let div = document.createElement("div")
                 div.style.textAlign = "left"
-                div.classList.add("language-plaintext", "hljs")
-                div.style.whiteSpace = "pre-wrap"
-                div.textContent = tts.methodDocstringRequestBody(content.title, content.signature).messages[0].content[0].text
+                // div.classList.add("language-plaintext", "hljs")
+                div.style.padding = "5px";
+                // div.style.whiteSpace = "pre-wrap"
+                let pureText = tts.methodDocstringRequestBody(content.title, content.signature).messages[0].content[0].text
+                div.innerHTML = window.render(pureText, {
+                    htmlTags: true,
+                    typographer: false
+                })
                 Swal.fire({
                     title: "Prompt",
                     html: div
@@ -409,9 +418,13 @@ export class AIDocMe {
             ed.prompt.onclick = (e) => {
                 let div = document.createElement("div")
                 div.style.textAlign = "left"
-                div.classList.add("language-plaintext", "hljs")
-                div.style.whiteSpace = "pre-wrap"
-                div.textContent = tts.classDocstringRequestBody(content.title, content.signature).messages[0].content[0].text
+                // div.classList.add("language-plaintext", "hljs")
+                div.style.padding = "5px";
+                let pureText = tts.classDocstringRequestBody(content.title, content.signature).messages[0].content[0].text
+                div.innerHTML = window.render(pureText, {
+                    htmlTags: true,
+                    typographer: false
+                })
                 Swal.fire({
                     title: "Prompt",
                     html: div
