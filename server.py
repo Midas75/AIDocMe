@@ -22,7 +22,7 @@ async def redirect_to_index():
     return RedirectResponse(url="/static/index.html")
 @app.get("/favicon.ico")
 async def favicon():
-    return FileResponse("./favicon.ico")
+    return FileResponse(f"{current_dir}/favicon.ico")
 
 @app.post("/docme")
 async def docme(file: UploadFile = File(...)):
